@@ -3,8 +3,18 @@ import platform
 import psutil
 import datetime
 from colorama import init, Fore
+import winreg
 
 init(autoreset=True)
+
+def check_reset_from_registry():
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\Setup", 0, winreg.KEY_READ)
+        (value, type) = winreg.QueryValueEx(key, "SystemSetupInProgress")
+        winreg.CloseKey(key)
+        return "Yes" if value == 1 else "No"
+    except WindowsError:
+        return "Not available"
 
 def get_system_info():
     system_name = platform.uname()[1]
@@ -28,6 +38,8 @@ def get_system_info():
 
     reset_status = "Yes" if boot_time > install_date else "No"
 
+    reset_status_registry = check_reset_from_registry() if platform.system() == "Windows" else "Not available"
+
     return {
         "System Name": system_name,
         "System Version": system_version,
@@ -35,6 +47,7 @@ def get_system_info():
         "Install Date": install_date,
         "Boot Time": boot_time,
         "Reset Status": reset_status,
+        "Reset Status (Registry)": reset_status_registry,
     }
 
 def print_system_info(info):
